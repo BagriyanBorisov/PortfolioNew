@@ -1,54 +1,75 @@
-# React + TypeScript + Vite
+# Interactive Terminal Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to my personal portfolio website! This is a modern, interactive terminal-style portfolio built with React and TypeScript that showcases my journey as a software developer.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Interactive Terminal Interface**: Navigate through different sections using terminal commands
+- **Responsive Design**: Optimized for both desktop and mobile devices
+- **ASCII Art**: Dynamic ASCII art display (hidden on mobile for better UX)
+- **Typing Animation**: Simulated terminal typing effect for a more immersive experience
+- **Command History**: View your command history as you navigate
+- **Tab Completion**: Support for command auto-completion using Tab key
 
-## Expanding the ESLint configuration
+## 🛠️ Technologies Used
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React
+- TypeScript
+- CSS3
+- HTML5
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 📋 Available Commands
+
+- `help` - Display available commands
+- `about` - Learn about me
+- `education` - View my educational background
+- `skills` - View my technical skills
+- `projects` - See my featured projects
+- `projects [number]` - View detailed information about a specific project
+- `contact` - Get my contact information
+- `clear` - Clear the terminal
+
+## 🚀 Getting Started
+
+1. Clone the repository
+```bash
+git clone https://github.com/BagriyanBorisov/PortfolioNew.git
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+2. Install dependencies
+```bash
+cd portfolio
+npm install
 ```
+
+3. Start the development server
+```bash
+npm start
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) to view it in the browser
+
+## 📱 Mobile Experience
+
+The portfolio is fully responsive and optimized for mobile devices:
+- ASCII art is hidden on mobile screens for better performance
+- Touch-friendly interface
+- Responsive layout that adapts to different screen sizes
+
+## 🔧 Development
+
+To build the project for production:
+```bash
+npm run build
+```
+
+## 📫 Contact
+
+Feel free to reach out to me:
+- Email: [bagriyan.dilyanov@abv.bg](mailto:bagriyan.dilyanov@abv.bg)
+- GitHub: [github.com/BagriyanBorisov](https://github.com/BagriyanBorisov)
+- LinkedIn: [linkedin.com/in/bagriyan-borisov-a15a95224/](https://linkedin.com/in/bagriyan-borisov-a15a95224/)
+
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
