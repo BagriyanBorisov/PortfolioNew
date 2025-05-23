@@ -128,11 +128,11 @@ const Terminal: React.FC = () => {
 Available commands:
 - help: Show this help message
 - about: Learn about me
+- education: View my educational background
 - skills: View my technical skills
 - projects: See my projects
 - projects [number]: View detailed information about a specific project
 - contact: Get my contact information
-- education: View my educational background
 - clear: Clear the terminal`;
         break;
       case 'about':
