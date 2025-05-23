@@ -57,17 +57,20 @@
   overflow-x: hidden;
 }
 
+@media (max-width: 768px) {
+  .terminal-line.ascii-art {
+    display: none;
+  }
+  
+  .welcome-message {
+    margin-top: 20px;
+  }
+}
+
 @media (max-width: 1200px) {
   .terminal-line.ascii-art {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     font-size: 11px;
-  }
-}
-
-@media (max-width: 768px) {
-  .terminal-line.ascii-art {
-    grid-template-columns: 1fr;
-    font-size: 10px;
   }
 }
 
