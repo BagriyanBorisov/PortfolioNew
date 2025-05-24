@@ -129,15 +129,6 @@ const Terminal: React.FC = () => {
     }
   }, []);
 
-  const handleContainerClick = (e: React.MouseEvent) => {
-    // Only handle clicks directly on the container
-    if (e.target === containerRef.current) {
-      if (!isTypingRef.current && inputRef.current) {
-        inputRef.current.focus();
-      }
-    }
-  };
-
   // Function to detect URLs and render them as clickable links
   const renderTextWithLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)|(github\.com\/[^\s]+)|(linkedin\.com\/[^\s]+)/g;
