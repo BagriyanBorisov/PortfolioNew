@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { asciiArt } from './asciiArt';
 import TypingText from './TypingText';
+import CertificateViewer from './CertificateViewer';
 import './Terminal.css';
 
 interface TerminalLine {
-  text: string;
+  text: string | React.ReactNode;
   isTyping: boolean;
   isCommand?: boolean;
   isWelcome?: boolean;
+  onTypingComplete?: () => void;
 }
 
 const AVAILABLE_COMMANDS = [
@@ -27,16 +29,41 @@ const Terminal: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [commandIndex, setCommandIndex] = useState(-1);
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [selectedCertificate, setSelectedCertificate] = useState<string | null>(null);
+  const [isCertificateViewerVisible, setIsCertificateViewerVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isTypingRef = useRef(false);
 
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  // Ensure certificate viewer starts hidden
+  useEffect(() => {
+    setIsCertificateViewerVisible(false);
+    setSelectedCertificate(null);
+  }, []);
+
   useEffect(() => {
     // Add initial ASCII art and welcome message
     setHistory([
       { text: asciiArt, isTyping: false },
-      { text: 'Welcome to Bagriyan Borisov\'s Portfolio! Type "help" to see available commands.', isTyping: false, isWelcome: true }
+      { text: "Welcome to Bagriyan Borisov's Portfolio! Type \"help\" to see available commands.", isTyping: false, isWelcome: true }
     ]);
   }, []);
 
@@ -103,10 +130,101 @@ const Terminal: React.FC = () => {
   }, []);
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!isTypingRef.current && inputRef.current) {
-      inputRef.current.focus();
+    // Only handle clicks directly on the container
+    if (e.target === containerRef.current) {
+      if (!isTypingRef.current && inputRef.current) {
+        inputRef.current.focus();
+      }
     }
+  };
+
+  // Function to detect URLs and render them as clickable links
+  const renderTextWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)|(github\.com\/[^\s]+)|(linkedin\.com\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    
+    return parts.map((part, index) => {
+      if (part && urlRegex.test(part)) {
+        const url = part.startsWith('http') ? part : `https://${part}`;
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#00ff00', textDecoration: 'underline' }}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
+  const handleCertificateClick = (fileName: string) => {
+    setSelectedCertificate(`certificates/${fileName}`);
+    setIsCertificateViewerVisible(true);
+  };
+
+  const renderCertificateLinks = (text: string | React.ReactNode) => {
+    if (typeof text !== 'string') {
+      return text;
+    }
+
+    // If this is the education section
+    if (text.includes('Certifications:')) {
+      // Map course names to file names
+      const fileMap: { [key: string]: string } = {
+        'Intern & Team Lead Academy (incl. Recommendation)': 'intern-team-lead.jpg',
+        'ASP.NET Advanced': 'aspnet-advanced.jpg',
+        'ASP.NET Fundamentals': 'aspnet-fundamentals.jpg',
+        'Entity Framework Core': 'entity-framework.jpg',
+        'MS SQL': 'ms-sql.jpg',
+        'JS Applications': 'js-applications.jpg',
+        'JS Advanced': 'js-advanced.jpg',
+        'C# OOP': 'csharp-oop.jpg',
+        'C# Advanced': 'csharp-advanced.jpg',
+        'Programming Fundamentals with C#': 'programming-fundamentals.jpg',
+        'Basics with C#': 'csharp-basics.jpg'
+      };
+
+      const lines = text.split('\n');
+      const result = lines.map((line, index) => {
+        if (line.startsWith('- ')) {
+          const parts = line.split('|');
+          const courseName = parts[0].replace('- ', '').trim();
+          const restOfLine = parts.slice(1).join('|');
+
+          const fileName = fileMap[courseName];
+          if (fileName) {
+            return (
+              <div key={index} className="terminal-line">
+                - <span
+                    onClick={() => handleCertificateClick(fileName)}
+                    style={{
+                      color: '#00ff00',
+                      textDecoration: 'underline',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {courseName}
+                  </span>
+                  {restOfLine}
+              </div>
+            );
+          }
+        }
+        if (line.trim() === '') {
+          return <div key={index} className="terminal-line" style={{ height: '1.4em' }}>&nbsp;</div>;
+        }
+        return <div key={index} className="terminal-line">{line}</div>;
+      });
+
+      return <div className="terminal-line">{result}</div>;
+    }
+
+    return <div className="terminal-line">{text}</div>;
   };
 
   const handleCommand = (command: string) => {
@@ -114,15 +232,69 @@ const Terminal: React.FC = () => {
       return;
     }
 
+    const [mainCommand, ...args] = command.toLowerCase().split(' ');
+
+    // Handle certificate viewer visibility based on command
+    if (mainCommand === 'education') {
+      setIsCertificateViewerVisible(true);
+    } else {
+      setIsCertificateViewerVisible(false);
+      setSelectedCertificate(null);
+    }
+
+    // Add command to history if it's not empty
+    if (command.trim()) {
+      setCommandHistory(prev => [...prev, command]);
+      setHistoryIndex(-1);
+    }
+
     isTypingRef.current = true;
     setIsTyping(true);
 
     const newHistory = [...history, { text: `$ ${command}`, isTyping: false, isCommand: true }];
     
-    let response = '';
-    const [mainCommand, ...args] = command.toLowerCase().split(' ');
+    let response: string | React.ReactNode = '';
 
     switch (mainCommand) {
+      case 'education':
+        // First add the header with typing animation
+        newHistory.push({ 
+          text: `Education
+---------
+Bachelor's Degree in Computer Science
+University of Veliko Turnovo "St. Cyril and St. Methodius"
+Veliko Turnovo, Bulgaria | Sep 2019 - Jul 2024
+
+Professional Degree - Computer Technician and Technologies
+PGMET "Deveti mai"
+Cherven Bryag, Bulgaria | Sep 2015 - Jul 2019
+
+
+Certifications:
+- Intern & Team Lead Academy (incl. Recommendation) | Nov 2023 - Feb 2024 (SoftUni)
+- ASP.NET Advanced | Jul 2023 - Aug 2023 (SoftUni)
+- ASP.NET Fundamentals | May 2023 - Jul 2023 (SoftUni)
+- Entity Framework Core | Feb 2023 - Mar 2023 (SoftUni)
+- MS SQL | Jan 2023 - Mar 2023 (SoftUni)
+- JS Applications | Oct 2022 - Dec 2022 (SoftUni)
+- JS Advanced | Sep 2022 - Oct 2022 (SoftUni)
+- C# OOP | Jun 2022 - Aug 2022 (SoftUni)
+- C# Advanced | Jun 2022 - Aug 2022 (SoftUni)
+- Programming Fundamentals with C# | Jan 2022 - Apr 2022 (SoftUni)
+- Basics with C# | Oct 2021 - Dec 2021 (SoftUni)`, 
+          isTyping: true,
+          onTypingComplete: () => {
+            const updatedHistory = [...newHistory];
+            const lastIndex = updatedHistory.length - 1;
+            updatedHistory[lastIndex] = {
+              text: renderCertificateLinks(updatedHistory[lastIndex].text),
+              isTyping: false
+            };
+            setHistory(updatedHistory);
+            handleTypingComplete();
+          }
+        });
+        break;
       case 'help':
         response = `
 Available commands:
@@ -271,7 +443,7 @@ Features:
 - Real-time hand tracking and gesture recognition
 - Follows the tip of your index finger in real time.
 - Push your pinky finger down to scroll vertically.
-- Show a “peace” sign (index + middle finger) to trigger a click.
+- Show a "peace" sign (index + middle finger) to trigger a click.
 - Pinch your thumb and index finger together to drag-and-drop.
 
 GitHub: https://github.com/BagriyanBorisov/MouseCameraControl`;
@@ -298,42 +470,15 @@ Contact Information
 Email: bagriyan.dilyanov@abv.bg
 GitHub: github.com/BagriyanBorisov
 LinkedIn: linkedin.com/in/bagriyan-borisov-a15a95224/
-Portfolio: https://bagriyanborisov.github.io/
 
 Feel free to reach out for:
 - Job opportunities
 - Collaboration on projects`;
         break;
-      case 'education':
-        response = `
-Education
----------
-Bachelor's Degree in Computer Science
-University of Veliko Turnovo "St. Cyril and St. Methodius"
-Veliko Turnovo, Bulgaria | Sep 2019 - Jul 2024
-
-Professional Degree - Computer Technician and Technologies
-PGMET "Deveti mai"
-Cherven Bryag, Bulgaria | Sep 2015 - Jul 2019
-
-
-Certifications:
-- Intern & Team Lead Academy (incl. Recommendation) | Nov 2023 - Feb 2024 (SoftUni)
-- ASP.NET Advanced | Jul 2023 - Aug 2023 (SoftUni)
-- ASP.NET Fundamentals | May 2023 - Jul 2023 (SoftUni)
-- Entity Framework Core | Feb 2023 - Mar 2023 (SoftUni)
-- MS SQL | Jan 2023 - Mar 2023 (SoftUni)
-- JS Applications | Oct 2022 - Dec 2022 (SoftUni)
-- JS Advanced | Sep 2022 - Oct 2022 (SoftUni)
-- C# OOP | Jun 2022 - Aug 2022 (SoftUni)
-- C# Advanced | Jun 2022 - Aug 2022 (SoftUni)
-- Programming Fundamentals with C# | Jan 2022 - Apr 2022 (SoftUni)
-- Basics with C# | Oct 2021 - Dec 2021 (SoftUni)`;
-        break;
       case 'clear':
         setHistory([
           { text: asciiArt, isTyping: false },
-          { text: 'Welcome to Bagriyan Borisov\'s Portfolio! Type "help" to see available commands.', isTyping: false, isWelcome: true }
+          { text: "Welcome to Bagriyan Borisov's Portfolio! Type \"help\" to see available commands.", isTyping: false, isWelcome: true }
         ]);
         isTypingRef.current = false;
         setIsTyping(false);
@@ -420,47 +565,115 @@ Certifications:
       e.preventDefault();
       return;
     }
+
     if (e.key === 'Tab') {
       e.preventDefault();
       handleTabPress(e);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex === -1 
+          ? commandHistory.length - 1 
+          : Math.max(0, historyIndex - 1);
+        setHistoryIndex(newIndex);
+        setInput(commandHistory[newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex !== -1) {
+        const newIndex = historyIndex + 1;
+        if (newIndex >= commandHistory.length) {
+          setHistoryIndex(-1);
+          setInput('');
+        } else {
+          setHistoryIndex(newIndex);
+          setInput(commandHistory[newIndex]);
+        }
+      }
     }
   };
 
-  return (
-    <div className={`terminal-container ${isTyping ? 'busy' : ''}`} ref={containerRef} onClick={handleContainerClick}>
-      <div className="terminal-content" ref={contentRef}>
-        <div className="sticky-header">
-          <div className="terminal-line ascii-art">{asciiArt}</div>
-          <div className="terminal-line welcome-message">Welcome to Bagriyan Borisov's Portfolio! Type "help" to see available commands.</div>
-        </div>
-        {history.slice(2).map((line, index) => (
-          <div className="terminal-line" key={index}>
-            {line.isTyping ? (
-              <TypingText 
-                text={line.text} 
-                onComplete={handleTypingComplete}
-                typingSpeed={line.isCommand ? 5 : 15}
-              />
-            ) : (
-              line.text
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="input-line">
-        <span className={`prompt ${isTyping ? 'busy' : ''}`}>{'>'}</span>
-        <input
-          className="terminal-input"
-          ref={inputRef}
-          value={input}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          onKeyDown={handleKeyDown}
-          autoFocus
-          disabled={isTyping}
-          readOnly={isTyping}
+  const renderLine = (line: TerminalLine) => {
+    if (line.isTyping) {
+      return (
+        <TypingText 
+          text={typeof line.text === 'string' ? line.text : ''} 
+          onComplete={line.onTypingComplete || handleTypingComplete}
+          typingSpeed={line.isCommand ? 5 : 15}
         />
+      );
+    }
+    
+    if (React.isValidElement(line.text)) {
+      return line.text;
+    }
+    
+    const text = typeof line.text === 'string' ? line.text : '';
+    return renderCertificateLinks(renderTextWithLinks(text));
+  };
+
+  // Add the click handler to the window object
+  useEffect(() => {
+    (window as any).handleCertificateClick = handleCertificateClick;
+    return () => {
+      delete (window as any).handleCertificateClick;
+    };
+  }, []);
+
+  return (
+    <div className="app-container">
+      <div 
+        className={`terminal-container ${isTyping ? 'busy' : ''} ${isCertificateViewerVisible ? 'certificate-visible' : ''}`} 
+        ref={containerRef} 
+        onClick={(e) => {
+          if (e.target === containerRef.current) {
+            if (!isTypingRef.current && inputRef.current) {
+              inputRef.current.focus();
+            }
+          }
+        }}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <div 
+          className="terminal-content" 
+          ref={contentRef}
+          style={{ pointerEvents: 'auto' }}
+        >
+          <div className="sticky-header">
+            <div className="terminal-line ascii-art">{asciiArt}</div>
+            <div className="terminal-line welcome-message">Welcome to Bagriyan Borisov's Portfolio! Type "help" to see available commands.</div>
+          </div>
+          <div className="terminal-history">
+            {history.slice(2).map((line, index) => (
+              <div 
+                className="terminal-line" 
+                key={index}
+                style={{ pointerEvents: 'auto' }}
+              >
+                {renderLine(line)}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="input-line">
+          <span className={`prompt ${isTyping ? 'busy' : ''}`}>{'>'}</span>
+          <input
+            className="terminal-input"
+            ref={inputRef}
+            value={input}
+            onChange={handleInputChange}
+            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
+            autoFocus={!isMobile}
+            readOnly={isTyping}
+            inputMode={isMobile ? "none" : "text"}
+          />
+        </div>
       </div>
+      <CertificateViewer 
+        selectedCertificate={selectedCertificate} 
+        isVisible={isCertificateViewerVisible}
+      />
     </div>
   );
 };

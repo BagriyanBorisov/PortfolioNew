@@ -15,6 +15,31 @@ const TypingText: React.FC<TypingTextProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const hasStartedRef = useRef(false);
 
+  // Function to detect URLs and render them as clickable links
+  const renderTextWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)|(github\.com\/[^\s]+)|(linkedin\.com\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    
+    return parts.map((part, index) => {
+      if (part && urlRegex.test(part)) {
+        const url = part.startsWith('http') ? part : `https://${part}`;
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#00ff00', textDecoration: 'underline' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   useEffect(() => {
     // Only start typing if we haven't started yet
     if (!hasStartedRef.current) {
@@ -45,7 +70,7 @@ const TypingText: React.FC<TypingTextProps> = ({
     }
   }, [text]);
 
-  return <span>{displayedText}</span>;
+  return <span>{renderTextWithLinks(displayedText)}</span>;
 };
 
 export default TypingText; 
