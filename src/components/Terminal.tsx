@@ -657,7 +657,6 @@ Feel free to reach out for:
             onKeyDown={handleKeyDown}
             autoFocus={!isMobile}
             readOnly={isTyping}
-            inputMode={isMobile ? "none" : "text"}
           />
         </div>
       </div>
